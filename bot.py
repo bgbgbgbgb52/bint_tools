@@ -5,17 +5,20 @@ import datetime
 import pytz
 import random
 import os
+from dotenv import load_dotenv
 
-bot = TeleBot("7267179561:AAFGHbX65uzhd3d0aHoSAqMrxmOrMqHKcx0")
+# Load environment variables from the .env file
+load_dotenv()
 
-
-@bot.message_handler(func=lambda m: True)
-def echo_all(message):
+# Get the bot token from the .env file
+bot_token = os.getenv('BOT_TOKEN')
+bot = TeleBot(bot_token)
+def get_message_time(message):
 	# Assuming 'message.date' is a Unix timestamp
 	messageTime = message.date
 
-	# Convert the timestamp to a datetime object in UTC
-	messageTime = datetime.datetime.utcfromtimestamp(messageTime)
+	# Convert the timestamp to a timezone-aware datetime object in UTC
+	messageTime = datetime.datetime.fromtimestamp(messageTime, datetime.timezone.utc)
 
 	# Define the Cairo time zone
 	cairo_tz = pytz.timezone('Africa/Cairo')
@@ -28,11 +31,21 @@ def echo_all(message):
 
 	# Store the formatted date and time as a string
 	TimeStamp = str(messageTime)
+	return TimeStamp
+def log(message):
+	TimeStamp = get_message_time(message)
 	bot.send_message(chat_id=566211382,
 	                 text=f"User ID :{message.from_user.id}\nFull Name : {message.from_user.first_name} {message.from_user.last_name}\n"
 	                      f"User Name: {message.from_user.username}\nChat ID : {message.chat.id}\nMessage ID : {message.message_id}\n"
 	                      f"Message Content: {message.text}\n"
 	                      f"Time : {TimeStamp}")
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+	log(message)
+	bot.reply_to(message, f"Welcome {message.from_user.first_name} to the bin tools bot!")
+@bot.message_handler(func=lambda m: True)
+def echo_all(message):
+	log(message)
 	message_text = str(message.text)
 	message_content = message_text.split(' ')
 	message_text = message_content[0]
